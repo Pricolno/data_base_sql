@@ -121,8 +121,28 @@ def convert_csv_to_db():
         add_values_to_db(value_set)
 
 
+def average_score_by_object(need_object):
+    with sqlite3.connect(path_to_db) as db:
+        cursor = db.cursor()
+        cursor.execute("""SELECT студент, оценка FROM Оценки WHERE предмет=?
+        """, (need_object,))
+        student_score = cursor.fetchall()
+        student_info = dict()
+        for student, score in student_score:
+            surname, name = student.split('_')
+            count_sum = student_info.get((surname, name))
+            if count_sum is None:
+                student_info[surname, name] = 1, int(score)
+            else:
+                student_info[surname, name] = int(count_sum[0]) + 1, int(count_sum[1]) + int(score)
+
+        print('Средний баллы учеников по ' + need_object)
+        for (surname, name) in student_info:
+            count, sum = student_info[surname, name]
+            print(surname, name + ': ' + str(sum / count))
 
 
 if __name__ == '__main__':
     init_db(force=True)
     convert_csv_to_db()
+    average_score_by_object('Математика')
